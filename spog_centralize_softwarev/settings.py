@@ -112,16 +112,6 @@ DATABASES = {
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-DATABASES = {
-  'default': {
-  'ENGINE': 'django.db.backends.postgresql',
-  'NAME': 'dev_spog_rds',         # Database name
-  'USER': 'postgres',       # PostgreSQL username
-  'PASSWORD': 'MKQX**H4C-k0yMN>#x3bxGk.1Psm', # PostgreSQL password
-  'HOST': 'dev-spog-postgresql.co5uwimya0ca.us-east-1.rds.amazonaws.com',       # Use '127.0.0.1' if needed
-  'PORT': '5432',            # Default PostgreSQL port
-    }
-}
     },
     {
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
