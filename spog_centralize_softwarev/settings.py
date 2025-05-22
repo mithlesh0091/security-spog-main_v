@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -37,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'spog_dashboard'
 ]
 
 MIDDLEWARE = [
@@ -49,12 +51,28 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'spog_centralize_softwarev.urls'
+# Authentication
+ROOT_URLCONF = 'spog_centralize_softwarev.urls'  # Replace with your project name
+WSGI_APPLICATION = 'spog_centralize_softwarev.wsgi.application'
+LOGIN_REDIRECT_URL = '/admin_dashboard/'
+LOGOUT_REDIRECT_URL = 'admin_dashboard'
+#LOGIN_REDIRECT_URL = '/user-dashboard/'
+#LOGOUT_REDIRECT_URL = 'user-dashboard'
+# LOGIN_URL = '/accounts/login/'
+# LOGOUT_REDIRECT_URL = '/accounts/login/'
+# LOGIN_REDIRECT_URL = '/user-dashboard/'  # After successful login
+# LOGIN_URL = '/accounts/login/'
+
+
+# Session Security
+SESSION_COOKIE_AGE = 3600  # 1 hour
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        #'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -129,3 +147,5 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
