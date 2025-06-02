@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}Security Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <nav class="col-md-2 dashboard-nav">
+            <h4 class="text-white mb-4">VERSETAL SPOG</h4>
+            <div class="nav flex-column">
+                <a class="nav-link nav-link-custom" href="#">Overview </a>
+                <a class="nav-link nav-link-custom" href="{% url 'security_dashboard' %}">Security</a>
+                <a class="nav-link nav-link-custom" href="{% url 'zoho_dashboard' %}">Zoho</a>
+                <a class="nav-link nav-link-custom" href="#settings">Help Desk</a>
+            </div>
+            <form action="{% url 'logout' %}" method="post" class="mt-auto">
+                {% csrf_token %}
+                <button type="submit" class="nav-link nav-link-custom btn btn-link w-100 text-left">
+                    Logout
+                </button>
+            </form>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="col-md-10 p-4 bg-light">
+            <h2>Zoho Dashboard</h2>
+            <div class="row mt-4">
+                <!-- Chart Section -->
+                <div class="col-md-8 mt-4 mt-md-0">
+                    <div class="card shadow">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <!-- <h6 class="mb-0">Tickets ({{ status_data.date_filter }})</h6>
+                            <h6 class="mb-0">Total: {{ status_data.total }}</h6> -->
+                        </div>
+                        <div class="card-body">
+                            <canvas id="myChart" style="width:100%; max-width:800px"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('myChart').getContext('2d');
+    
+    new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: {{ status_data.labels|safe }},
+            datasets: [{
+                data: {{ status_data.values|safe }},
+                backgroundColor: {{ status_data.colors|safe }},
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'right',
+                    labels: {
+                        color: '#333',
+                        font: {
+                            size: 12
+                        }
+                    }
+                },
+                tooltips: {
+                    bodyFont: {
+                        size: 14
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}
