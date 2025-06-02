@@ -1,43 +1,693 @@
-{% extends "base.html" %}
-
-{% block title %}Admin Dashboard{% endblock %}
-
-{% block content %}
-<div class="container-fluid">
-    <div class="row">
-        <!-- Sidebar -->
-        <nav class="col-md-2 dashboard-nav">
-            <h4 class="text-white mb-4">VERSETAL SPOG </h4>
-            <div class="nav flex-column">
-                <a class="nav-link nav-link-custom" href="#users">Overview </a>
-                <a class="nav-link nav-link-custom" href="#analytics">Security </a>
-                <a class="nav-link nav-link-custom" href="#reports">NOC</a>
-                <a class="nav-link nav-link-custom" href="#settings">Help Desk</a>
-            </div>
-             <form action="{% url 'logout' %}" method="post" class="mt-auto">  <!-- mt-auto pushes it to the bottom -->
-                    {% csrf_token %}
-                    <button type="submit" class="nav-link nav-link-custom btn btn-link w-100 text-left">
-                        Logout
-                    </button>
-                </form>
-        </nav>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VERSETAL SPOG - Admin Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #4361ee;
+            --secondary: #3f37c9;
+            --success: #4cc9f0;
+            --dark: #1d3557;
+            --light: #f8f9fa;
+            --sidebar-width: 250px;
+        }
         
-
-        <!-- Main Content -->
-        <main class="col-md-10 p-4 bg-light">
-            <h2>Security Dashboard</h2>
-            <div class="row mt-4">
-                <div class="col-md-4">
-                    <div class="card shadow">
-                        <div class="card-body">
-                            <h5 class="card-title">Active Users</h5>
-                            <p class="display-4">42</p>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fb;
+            color: #333;
+            overflow-x: hidden;
+        }
+        
+        .dashboard-nav {
+            background: linear-gradient(180deg, var(--dark), var(--secondary));
+            min-height: 100vh;
+            padding: 20px 0;
+            box-shadow: 3px 0 10px rgba(0,0,0,0.1);
+            position: fixed;
+            width: var(--sidebar-width);
+            z-index: 1000;
+        }
+        
+        .dashboard-nav .nav {
+            padding: 20px 0;
+        }
+        
+        .nav-link-custom {
+            color: rgba(255, 255, 255, 0.8);
+            padding: 12px 20px;
+            margin: 5px 15px;
+            border-radius: 8px;
+            transition: all 0.3s;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+        }
+        
+        .nav-link-custom i {
+            margin-right: 10px;
+            width: 24px;
+            text-align: center;
+        }
+        
+        .nav-link-custom:hover, .nav-link-custom.active {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            transform: translateX(5px);
+        }
+        
+        .nav-link-custom.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .dashboard-logo {
+            text-align: center;
+            padding: 20px 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .dashboard-logo h4 {
+            color: white;
+            font-weight: 700;
+            margin-bottom: 0;
+        }
+        
+        .dashboard-logo .logo-icon {
+            font-size: 28px;
+            color: var(--success);
+            margin-right: 10px;
+        }
+        
+        main {
+            margin-left: var(--sidebar-width);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eaeaea;
+        }
+        
+        .dashboard-header h2 {
+            color: var(--dark);
+            font-weight: 700;
+            margin: 0;
+        }
+        
+        .card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            margin-bottom: 25px;
+            transition: transform 0.3s;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .card-title {
+            font-size: 1rem;
+            color: #6c757d;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        
+        .metric-value {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+        
+        .metric-card {
+            border-left: 4px solid;
+            transition: all 0.3s;
+        }
+        
+        .metric-card.primary {
+            border-left-color: var(--primary);
+        }
+        
+        .metric-card.success {
+            border-left-color: #4ade80;
+        }
+        
+        .metric-card.warning {
+            border-left-color: #f59e0b;
+        }
+        
+        .metric-card.danger {
+            border-left-color: #ef4444;
+        }
+        
+        .metric-card .icon-container {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            position: absolute;
+            right: 20px;
+            top: 20px;
+            opacity: 0.2;
+        }
+        
+        .chart-container {
+            height: 300px;
+            position: relative;
+        }
+        
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        
+        .recent-activity {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .recent-activity li {
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            align-items: center;
+        }
+        
+        .recent-activity li:last-child {
+            border-bottom: none;
+        }
+        
+        .activity-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            font-size: 16px;
+        }
+        
+        .activity-info {
+            flex: 1;
+        }
+        
+        .activity-title {
+            font-weight: 600;
+            margin-bottom: 3px;
+        }
+        
+        .activity-time {
+            font-size: 0.85rem;
+            color: #6c757d;
+        }
+        
+        .badge-custom {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.75rem;
+        }
+        
+        .table th {
+            font-weight: 600;
+            color: var(--dark);
+        }
+        
+        .table-hover tbody tr:hover {
+            background-color: rgba(67, 97, 238, 0.05);
+        }
+        
+        .logout-btn {
+            background: transparent;
+            border: none;
+            color: rgba(255, 255, 255, 0.8);
+            text-align: left;
+            padding: 12px 20px;
+            width: 100%;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        
+        .logout-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+        
+        .sidebar-footer {
+            margin-top: auto;
+            padding: 20px 15px 0;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        
+        .user-info img {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-right: 12px;
+            border: 2px solid var(--success);
+        }
+        
+        .user-details h6 {
+            color: white;
+            margin-bottom: 3px;
+            font-weight: 600;
+        }
+        
+        .user-details small {
+            color: rgba(255,255,255,0.7);
+        }
+        
+        .tab-content {
+            padding: 20px 0;
+        }
+        
+        .nav-tabs .nav-link {
+            border: none;
+            color: #6c757d;
+            font-weight: 500;
+            padding: 10px 20px;
+            border-radius: 8px;
+        }
+        
+        .nav-tabs .nav-link.active {
+            background: var(--primary);
+            color: white;
+        }
+        
+        @media (max-width: 992px) {
+            .dashboard-nav {
+                width: 70px;
+                overflow: hidden;
+            }
+            
+            .dashboard-nav .nav-link span {
+                display: none;
+            }
+            
+            .dashboard-nav .nav-link i {
+                margin-right: 0;
+                font-size: 1.2rem;
+            }
+            
+            .dashboard-logo h4, .user-info, .nav-link-custom .text {
+                display: none;
+            }
+            
+            main {
+                margin-left: 70px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <nav class="dashboard-nav col-md-2">
+                <div class="dashboard-logo">
+                    <h4><i class="fas fa-shield-alt logo-icon"></i> VERSETAL SPOG</h4>
+                </div>
+                
+                <div class="nav flex-column">
+                    <a class="nav-link nav-link-custom active" href="#overview">
+                        <i class="fas fa-home"></i> <span>Overview</span>
+                    </a>
+                    <a class="nav-link nav-link-custom" href="#security">
+                        <i class="fas fa-shield-alt"></i> <span>Security</span>
+                         
+                    </a>
+                    <a class="nav-link nav-link-custom" href="#zoho">
+                        <i class="fas fa-cloud"></i> <span>Data</span>
+                    </a>
+                    <a class="nav-link nav-link-custom" href="#helpdesk">
+                        <i class="fas fa-headset"></i> <span>Help Desk</span>
+                    </a>
+                </div>
+                
+                <div class="user-info">
+                    <img src="https://ui-avatars.com/api/?name=Admin+User&background=random" alt="Admin User">
+                    <div class="user-details">
+                        <h6>Admin User</h6>
+                        <small>Administrator</small>
+                    </div>
+                </div>
+                
+                <div class="sidebar-footer">
+                    <form action="{% url 'logout' %}" method="post">
+                        {% csrf_token %}
+                        <button type="submit" class="logout-btn w-100 text-left">
+                            <i class="fas fa-sign-out-alt"></i> <span>Logout</span>
+                        </button>
+                    </form>
+                </div>
+            </nav>
+            
+            <!-- Main Content -->
+            <main class="col-md-10 bg-light">
+                <div class="dashboard-header">
+                    <h2><i class="fas fa-home me-2"></i> Overview Dashboard</h2>
+                    <div class="d-flex">
+                        <div class="input-group me-2" style="width: 300px;">
+                            <input type="text" class="form-control" placeholder="Search...">
+                            <button class="btn btn-primary" type="button">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                        <button class="btn btn-light position-relative">
+                            <i class="fas fa-bell"></i>
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                3
+                            </span>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="tab-content">
+                    <!-- Overview Dashboard -->
+                    <div class="tab-pane fade show active" id="overview">
+                        <div class="row">
+                            <!-- Metrics Cards -->
+                            <div class="col-xl-3 col-md-6">
+                                <div class="card metric-card primary">
+                                    <div class="card-body">
+                                        <div class="icon-container bg-primary">
+                                            <i class="fas fa-users text-primary"></i>
+                                        </div>
+                                        <h5 class="card-title">Active Users</h5>
+                                        <p class="metric-value">142</p>
+                                        <p class="text-success mb-0"><i class="fas fa-arrow-up"></i> 12.5% from last week</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-xl-3 col-md-6">
+                                <div class="card metric-card success">
+                                    <div class="card-body">
+                                        <div class="icon-container bg-success">
+                                            <i class="fas fa-lock text-success"></i>
+                                        </div>
+                                        <h5 class="card-title">Secured Devices</h5>
+                                        <p class="metric-value">89%</p>
+                                        <p class="text-success mb-0"><i class="fas fa-check-circle"></i> All systems secure</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-xl-3 col-md-6">
+                                <div class="card metric-card warning">
+                                    <div class="card-body">
+                                        <div class="icon-container bg-warning">
+                                            <i class="fas fa-ticket-alt text-warning"></i>
+                                        </div>
+                                        <h5 class="card-title">Open Tickets</h5>
+                                        <p class="metric-value">24</p>
+                                        <p class="text-danger mb-0"><i class="fas fa-exclamation-circle"></i> 5 high priority</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-xl-3 col-md-6">
+                                <div class="card metric-card danger">
+                                    <div class="card-body">
+                                        <div class="icon-container bg-danger">
+                                            <i class="fas fa-bug text-danger"></i>
+                                        </div>
+                                        <h5 class="card-title">Ticket(s) Last 4 Hours</h5>
+                                        <p class="metric-value">3</p>
+                                        <p class="text-danger mb-0"><i class="fas fa-arrow-up"></i> 1 new today</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mt-4">
+                            <!-- Charts -->
+                            <div class="col-lg-8">
+                                <div class="card">
+                                    <div class="card-header bg-white border-0">
+                                        <h5 class="mb-0">Open Tickets by Status</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="chart-container">
+                                            <canvas id="activityChart"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-lg-4">
+                                <div class="card">
+                                    <div class="card-header bg-white border-0">
+                                        <h5 class="mb-0">System Status</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between mb-3">
+                                            <div>
+                                                <h6>Server Load</h6>
+                                                <div class="progress" style="height: 8px;">
+                                                    <div class="progress-bar bg-success" role="progressbar" style="width: 35%"></div>
+                                                </div>
+                                                <small class="text-muted">35% - Optimal</small>
+                                            </div>
+                                            <div>
+                                                <h6>Storage</h6>
+                                                <div class="progress" style="height: 8px;">
+                                                    <div class="progress-bar bg-warning" role="progressbar" style="width: 68%"></div>
+                                                </div>
+                                                <small class="text-muted">68% - 245GB used</small>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="mt-4">
+                                            <h6>Security Status</h6>
+                                            <div class="d-flex align-items-center">
+                                                <div class="me-3">
+                                                    <div class="bg-light p-2 rounded-circle">
+                                                        <i class="fas fa-shield-alt text-success fa-lg"></i>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <p class="mb-0">All systems protected</p>
+                                                    <small class="text-success">No critical issues detected</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="mt-4">
+                                            <h6>Recent Alerts</h6>
+                                            <ul class="recent-activity">
+                                                <li>
+                                                    <div class="activity-icon bg-warning text-white">
+                                                        <i class="fas fa-exclamation-triangle"></i>
+                                                    </div>
+                                                    <div class="activity-info">
+                                                        <div class="activity-title">Unusual login activity</div>
+                                                        <div class="activity-time">10 minutes ago</div>
+                                                    </div>
+                                                </li>
+                                                <li>
+                                                    <div class="activity-icon bg-success text-white">
+                                                        <i class="fas fa-check-circle"></i>
+                                                    </div>
+                                                    <div class="activity-info">
+                                                        <div class="activity-title">Backup completed</div>
+                                                        <div class="activity-time">2 hours ago</div>
+                                                    </div>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+                                        <h5 class="mb-0">Recent Users</h5>
+                                        <a href="#" class="btn btn-sm btn-primary">View All</a>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="table-responsive">
+                                            <table class="table table-hover">
+                                                <thead>
+                                                    <tr>
+                                                        <th>User</th>
+                                                        <th>Role</th>
+                                                        <th>Last Active</th>
+                                                        <th>Status</th>
+                                                        <th>Actions</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr>
+                                                        <td>
+                                                            <div class="d-flex align-items-center">
+                                                                <img src="https://ui-avatars.com/api/?name=John+Doe&background=random" class="user-avatar me-2" alt="John Doe">
+                                                                John Doe
+                                                            </div>
+                                                        </td>
+                                                        <td>Administrator</td>
+                                                        <td>2 hours ago</td>
+                                                        <td><span class="badge bg-success">Active</span></td>
+                                                        <td>
+                                                            <button class="btn btn-sm btn-outline-primary"><i class="fas fa-edit"></i></button>
+                                                            <button class="btn btn-sm btn-outline-danger ms-1"><i class="fas fa-trash"></i></button>
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>
+                                                            <div class="d-flex align-items-center">
+                                                                <img src="https://ui-avatars.com/api/?name=Jane+Smith&background=random" class="user-avatar me-2" alt="Jane Smith">
+                                                                Jane Smith
+                                                            </div>
+                                                        </td>
+                                                        <td>Support Agent</td>
+                                                        <td>5 hours ago</td>
+                                                        <td><span class="badge bg-success">Active</span></td>
+                                                        <td>
+                                                            <button class="btn btn-sm btn-outline-primary"><i class="fas fa-edit"></i></button>
+                                                            <button class="btn btn-sm btn-outline-danger ms-1"><i class="fas fa-trash"></i></button>
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>
+                                                            <div class="d-flex align-items-center">
+                                                                <img src="https://ui-avatars.com/api/?name=Robert+Johnson&background=random" class="user-avatar me-2" alt="Robert Johnson">
+                                                                Robert Johnson
+                                                            </div>
+                                                        </td>
+                                                        <td>Developer</td>
+                                                        <td>Yesterday</td>
+                                                        <td><span class="badge bg-warning">Away</span></td>
+                                                        <td>
+                                                            <button class="btn btn-sm btn-outline-primary"><i class="fas fa-edit"></i></button>
+                                                            <button class="btn btn-sm btn-outline-danger ms-1"><i class="fas fa-trash"></i></button>
+                                                        </td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <!-- Add more metrics cards -->
-            </div>
-        </main>
+            </main>
+        </div>
     </div>
-</div>
-{% endblock %}
+
+    <script>
+        // Initialize charts
+        document.addEventListener('DOMContentLoaded', function() {
+            // User Activity Chart - Horizontal Bar Chart
+            const activityCtx = document.getElementById('activityChart').getContext('2d');
+            const activityChart = new Chart(activityCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['New', 'Complete', 'Waiting Customer', 'Work In Progress', 'On Hold', 'Customer Note Added', 'Assigned'],
+                    datasets: [
+                        {
+                            label: 'Active Users',
+                            data: [120, 135, 130, 142, 150, 110, 125],
+                            backgroundColor: '#4361ee',
+                            borderRadius: 5,
+                            borderWidth: 0
+                        },
+                        {
+                            label: 'New Users',
+                            data: [25, 30, 28, 35, 40, 20, 30],
+                            backgroundColor: '#4cc9f0',
+                            borderRadius: 5,
+                            borderWidth: 0
+                        }
+                    ]
+                },
+                options: {
+                    indexAxis: 'y', // Makes the chart horizontal
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        title: {
+                            display: true,
+                            // text: 'Weekly User Activity',
+                            font: {
+                                size: 16
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            grid: {
+                                drawBorder: false
+                            },
+                            ticks: {
+                                stepSize: 20
+                            }
+                        },
+                        y: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Handle navigation
+            document.querySelectorAll('.nav-link-custom').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // Update active state
+                    document.querySelectorAll('.nav-link-custom').forEach(el => {
+                        el.classList.remove('active');
+                    });
+                    this.classList.add('active');
+                    
+                    // Update main header
+                    const tabName = this.textContent.trim();
+                    document.querySelector('.dashboard-header h2').innerHTML = 
+                        `<i class="fas ${this.querySelector('i').className.split(' ')[1]} me-2"></i> ${tabName} Dashboard`;
+                });
+            });
+        });
+    </script>
+</body>
+</html>

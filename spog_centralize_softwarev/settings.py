@@ -96,17 +96,27 @@ WSGI_APPLICATION = 'spog_centralize_softwarev.wsgi.application'
 #         'NAME': BASE_DIR / 'db.sqlite3',
 #     }
 # }
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'postgres',         # Database name
+#         'USER': 'postgres',       # PostgreSQL username
+#         'PASSWORD': 'postgres', # PostgreSQL password
+#         'HOST': 'localhost',       # Use '127.0.0.1' if needed
+#         'PORT': '5432',            # Default PostgreSQL port
+#     }
+# }
+# settings.py
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'postgres',         # Database name
-        'USER': 'postgres',       # PostgreSQL username
-        'PASSWORD': 'postgres', # PostgreSQL password
-        'HOST': 'localhost',       # Use '127.0.0.1' if needed
-        'PORT': '5432',            # Default PostgreSQL port
+        'NAME': 'dev_spog_rds',
+        'USER': 'postgres',
+        'PASSWORD': 'Mnjc3(n4ricpVlF:QFbyLul|s9<_',
+        'HOST': 'dev-spog-postgresql.co5uwimya0ca.us-east-1.rds.amazonaws.com',
+        'PORT': '5432',
     }
 }
-
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
 
