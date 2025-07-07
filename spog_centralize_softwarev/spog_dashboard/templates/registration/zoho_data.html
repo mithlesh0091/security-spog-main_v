@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h3>Import results:</h3>
+  <ul>
+    {% for msg in inserted %}
+      <li>{{ msg }}</li>
+    {% empty %}
+      <li>No employees inserted or updated.</li>
+    {% endfor %}
+  </ul>
+{% endblock %}

@@ -1,0 +1,256 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VERSETAL SPOG1 - Company Dashboard</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{% static 'css/company_dashboard.css' %}">
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <nav class="dashboard-nav col-md-2">
+                <div class="dashboard-logo">
+                    <h4><i class="fas fa-shield-alt logo-icon"></i> VERSETAL SPOG</h4>
+                </div>
+                
+                <div class="nav flex-column">
+                    <a class="nav-link nav-link-custom active" href="{% url 'company_dashboard' %}">
+                        <i class="fas fa-home"></i> <span>Overview</span>
+                    </a>
+                    <a class="nav-link nav-link-custom" href="{% url 'security_dashboard' %}">
+                        <i class="fas fa-shield-alt"></i> <span>Security</span>
+                    </a>
+                    <a class="nav-link nav-link-custom" href="{% url 'data_dashboard' %}">
+                        <i class="fas fa-cloud"></i> <span>Data</span>
+                    </a>
+                    <a class="nav-link nav-link-custom" href="{% url 'helpdesk_dashboard' %}">
+                        <i class="fas fa-headset"></i> <span>Help Desk</span>
+                    </a>
+                </div>
+                
+                <div class="user-info">
+                    <img src="{% if user.profile.image %}{{ user.profile.image.url }}{% else %}{% static 'images/default-avatar.png' %}{% endif %}" alt="{{ user.get_full_name }}">
+                    <div class="user-details">
+                        <h6>{{ user.get_full_name|default:user.username }}</h6>
+                        <small>{{ user.profile.role|default:"Company User" }}</small>
+                    </div>
+                </div>
+                
+                <div class="sidebar-footer">
+                    <form action="{% url 'logout' %}" method="post">
+                        {% csrf_token %}
+                        <button type="submit" class="logout-btn w-100 text-left">
+                            <i class="fas fa-sign-out-alt"></i> <span>Logout</span>
+                        </button>
+                    </form>
+                </div>
+            </nav>
+            
+            <!-- Main Content -->
+            <main class="col-md-10 bg-light">
+                <div class="dashboard-header">
+                    <h2><i class="fas fa-home me-2"></i> Company Dashboard</h2>
+                    <div class="d-flex">
+                        <div class="input-group me-2" style="width: 300px;">
+                            <input type="text" class="form-control" placeholder="Search...">
+                            <button class="btn btn-primary" type="button">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                        <button class="btn btn-light position-relative">
+                            <i class="fas fa-bell"></i>
+                            {% if notifications_count %}
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                {{ notifications_count }}
+                            </span>
+                            {% endif %}
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="tab-content">
+                    <div class="tab-pane fade show active" id="overview">
+                        <div class="row">
+                            <!-- Metrics Cards -->
+                            <div class="col-xl-3 col-md-6">
+                                <div class="card metric-card primary">
+                                    <div class="card-body">
+                                        <div class="icon-container bg-primary">
+                                            <i class="fas fa-users text-primary"></i>
+                                        </div>
+                                        <h5 class="card-title">Active Users</h5>
+                                        <p class="metric-value">{{ active_users_count }}</p>
+                                        <p class="text-success mb-0">
+                                            <i class="fas fa-arrow-up"></i> 
+                                            {{ user_growth_percentage }}% from last week
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- More metric cards with dynamic data -->
+                            {% for metric in metrics %}
+                            <div class="col-xl-3 col-md-6">
+                                <div class="card metric-card {{ metric.color_class }}">
+                                    <div class="card-body">
+                                        <div class="icon-container bg-{{ metric.color_class }}">
+                                            <i class="{{ metric.icon }} text-{{ metric.color_class }}"></i>
+                                        </div>
+                                        <h5 class="card-title">{{ metric.title }}</h5>
+                                        <p class="metric-value">{{ metric.value }}</p>
+                                        <p class="text-{{ metric.trend_color }} mb-0">
+                                            <i class="{{ metric.trend_icon }}"></i> {{ metric.trend_text }}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <!-- Charts Section -->
+                        <div class="row mt-4">
+                            <div class="col-lg-8">
+                                <div class="card">
+                                    <div class="card-header bg-white border-0">
+                                        <h5 class="mb-0">Ticket Status</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="chart-container">
+                                            <canvas id="ticketStatusChart"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- System Status Section -->
+                            <div class="col-lg-4">
+                                {% include 'registration/partials/system_status.html' %}
+                            </div>
+                        </div>
+                        
+                        <!-- Recent Users Table -->
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+                                        <h5 class="mb-0">Recent Users</h5>
+                                        <a href="{% url 'user_management' %}" class="btn btn-sm btn-primary">View All</a>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="table-responsive">
+                                            <table class="table table-hover">
+                                                <thead>
+                                                    <tr>
+                                                        <th>User</th>
+                                                        <th>Role</th>
+                                                        <th>Last Active</th>
+                                                        <th>Status</th>
+                                                        <th>Actions</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {% for recent_user in recent_users %}
+                                                    <tr>
+                                                        <td>
+                                                            <div class="d-flex align-items-center">
+                                                                <img src="{% if recent_user.profile.image %}{{ recent_user.profile.image.url }}{% else %}{% static 'images/default-avatar.png' %}{% endif %}" 
+                                                                     class="user-avatar me-2" 
+                                                                     alt="{{ recent_user.get_full_name }}">
+                                                                {{ recent_user.get_full_name|default:recent_user.username }}
+                                                            </div>
+                                                        </td>
+                                                        <td>{{ recent_user.profile.role|default:"-" }}</td>
+                                                        <td>{{ recent_user.last_login|timesince }} ago</td>
+                                                        <td>
+                                                            <span class="badge bg-{% if recent_user.is_active %}success{% else %}secondary{% endif %}">
+                                                                {% if recent_user.is_active %}Active{% else %}Inactive{% endif %}
+                                                            </span>
+                                                        </td>
+                                                        <td>
+                                                            <a href="{% url 'edit_user' recent_user.id %}" class="btn btn-sm btn-outline-primary">
+                                                                <i class="fas fa-edit"></i>
+                                                            </a>
+                                                            <button class="btn btn-sm btn-outline-danger ms-1" data-bs-toggle="modal" data-bs-target="#deleteUserModal{{ recent_user.id }}">
+                                                                <i class="fas fa-trash"></i>
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Initialize charts with dynamic data
+        document.addEventListener('DOMContentLoaded', function() {
+            // Ticket Status Chart
+            const ticketCtx = document.getElementById('ticketStatusChart').getContext('2d');
+            const ticketChart = new Chart(ticketCtx, {
+                type: 'bar',
+                data: {
+                    labels: {{ ticket_status_labels|safe }},
+                    datasets: [{
+                        label: 'Ticket Count',
+                        data: {{ ticket_status_data|safe }},
+                        backgroundColor: '#4361ee',
+                        borderRadius: 5,
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                drawBorder: false
+                            },
+                            ticks: {
+                                stepSize: 1
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
